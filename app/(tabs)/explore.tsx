@@ -7,7 +7,6 @@ import { FeatureData } from '../../components/explore/FeatureCard';
 import FeatureGrid from '../../components/explore/FeatureGrid';
 import GalleryBottomSheet from '../../components/explore/GalleryBottomSheet';
 import ImagePreviewModal from '../../components/explore/ImagePreviewModal';
-import TradeBottomSheet from '../../components/explore/TradeBottomSheet';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ExploreTab() {
@@ -17,7 +16,6 @@ export default function ExploreTab() {
   
   // Bottom sheet ref
   const bottomSheetRef = useRef<any>(null);
-  const tradeBottomSheetRef = useRef<any>(null);
   
   // Image preview modal state
   const [selectedImage, setSelectedImage] = useState<{ uri: any; title: string; id: number } | null>(null);
@@ -60,12 +58,10 @@ export default function ExploreTab() {
     }
   }, []);
 
-  // Open trade bottom sheet
+  // Navigate to trade page
   const openTrade = useCallback(() => {
-    if (tradeBottomSheetRef.current) {
-      tradeBottomSheetRef.current.snapToIndex(0); // Open to first snap point
-    }
-  }, []);
+    router.push('/trade');
+  }, [router]);
   
   // Open image preview
   const openImagePreview = useCallback((photo: { uri: any; title: string; id: number }) => {
@@ -84,20 +80,6 @@ export default function ExploreTab() {
     if (bottomSheetRef.current) {
       bottomSheetRef.current.close();
     }
-  }, []);
-
-  // Close trade bottom sheet
-  const closeTrade = useCallback(() => {
-    if (tradeBottomSheetRef.current) {
-      tradeBottomSheetRef.current.close();
-    }
-  }, []);
-
-  // Handle trade submission
-  const handleTradeSubmit = useCallback((data: { symbol: string; price: string; type: string }) => {
-    console.log('Trade submitted:', data);
-    // Here you would typically make an API call to submit the trade
-    // For demo purposes, we'll just log it
   }, []);
 
   const features: FeatureData[] = [
@@ -163,12 +145,6 @@ export default function ExploreTab() {
         photos={galleryPhotos}
         onClose={closeGallery}
         onPhotoPress={openImagePreview}
-      />
-
-      <TradeBottomSheet
-        ref={tradeBottomSheetRef}
-        onClose={closeTrade}
-        onSubmit={handleTradeSubmit}
       />
 
       <ImagePreviewModal
