@@ -66,7 +66,7 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -88,6 +88,17 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace 'com.shantoxdp.StickerSmash'
+    
+    // Add splits to generate smaller APKs per architecture
+    splits {
+        abi {
+            reset()
+            enable true
+            universalApk false  // Set to true if you want a universal APK too
+            include "arm64-v8a", "armeabi-v7a", "x86", "x86_64"
+        }
+    }
+    
     defaultConfig {
         applicationId 'com.shantoxdp.StickerSmash'
         minSdkVersion rootProject.ext.minSdkVersion
@@ -111,7 +122,7 @@ android {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
-            shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
+            shrinkResources true
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
