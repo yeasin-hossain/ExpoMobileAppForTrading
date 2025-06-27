@@ -31,27 +31,13 @@ export default function TradeForm({
   const [selectedSymbol, setSelectedSymbol] = useState('');
   const [price, setPrice] = useState('');
   const [tradeType, setTradeType] = useState<'buy' | 'sell' | ''>('');
-  const [showSymbolDropdown, setShowSymbolDropdown] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   const handleSymbolSelect = (option: DropdownOption) => {
     setSelectedSymbol(option.value);
-    setShowSymbolDropdown(false);
   };
 
   const handleTypeSelect = (option: DropdownOption) => {
     setTradeType(option.value as 'buy' | 'sell');
-    setShowTypeDropdown(false);
-  };
-
-  const handleSymbolToggle = () => {
-    setShowSymbolDropdown(!showSymbolDropdown);
-    setShowTypeDropdown(false);
-  };
-
-  const handleTypeToggle = () => {
-    setShowTypeDropdown(!showTypeDropdown);
-    setShowSymbolDropdown(false);
   };
 
   const handleSubmit = () => {
@@ -82,8 +68,6 @@ export default function TradeForm({
         value={selectedSymbol}
         placeholder="Choose a cryptocurrency"
         options={symbolOptions}
-        isOpen={showSymbolDropdown}
-        onToggle={handleSymbolToggle}
         onSelect={handleSymbolSelect}
       />
 
@@ -92,9 +76,8 @@ export default function TradeForm({
         value={tradeType}
         placeholder="Select trade type"
         options={tradeTypeOptions}
-        isOpen={showTypeDropdown}
-        onToggle={handleTypeToggle}
         onSelect={handleTypeSelect}
+        defaultSnapPoint={0} // Open at 40% for smaller list
       />
 
       <PriceInput

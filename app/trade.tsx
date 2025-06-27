@@ -19,6 +19,20 @@ export default function TradePage() {
     { label: 'Cardano (ADA)', value: 'ADA' },
     { label: 'Solana (SOL)', value: 'SOL' },
     { label: 'Polygon (MATIC)', value: 'MATIC' },
+    { label: 'Dogecoin (DOGE)', value: 'DOGE' },
+    { label: 'Avalanche (AVAX)', value: 'AVAX' },
+    { label: 'Chainlink (LINK)', value: 'LINK' },
+    { label: 'Polkadot (DOT)', value: 'DOT' },
+    { label: 'Litecoin (LTC)', value: 'LTC' },
+    { label: 'TRON (TRX)', value: 'TRX' },
+    { label: 'Uniswap (UNI)', value: 'UNI' },
+    { label: 'Cosmos (ATOM)', value: 'ATOM' },
+    { label: 'XRP (XRP)', value: 'XRP' },
+    { label: 'Stellar (XLM)', value: 'XLM' },
+    { label: 'VeChain (VET)', value: 'VET' },
+    { label: 'Algorand (ALGO)', value: 'ALGO' },
+    { label: 'Fantom (FTM)', value: 'FTM' },
+    { label: 'Near Protocol (NEAR)', value: 'NEAR' },
   ];
 
   const tradeTypeOptions: DropdownOption[] = [
