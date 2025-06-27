@@ -62,6 +62,11 @@ export default function ExploreTab() {
   const openTrade = useCallback(() => {
     router.push('/trade');
   }, [router]);
+
+  // Navigate to alert demo page
+  const openAlertDemo = useCallback(() => {
+    router.push('/alert-demo');
+  }, [router]);
   
   // Open image preview
   const openImagePreview = useCallback((photo: { uri: any; title: string; id: number }) => {
@@ -118,6 +123,15 @@ export default function ExploreTab() {
       title: "Share", 
       description: "Share with friends",
       onPress: () => console.log('Share feature')
+    },
+    { 
+      icon: "notifications", 
+      title: "Alert Demo", 
+      description: "Test custom alerts & toasts",
+      onPress: openAlertDemo,
+      isHighlighted: true,
+      showBadge: true,
+      badgeText: "DEMO"
     },
     { 
       icon: "analytics", 

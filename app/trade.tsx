@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
-import { Alert, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert } from '../components/CustomAlert';
 import { DropdownOption } from '../components/trade/Dropdown';
 import InfoCard from '../components/trade/InfoCard';
 import TradeForm, { TradeFormData } from '../components/trade/TradeForm';
