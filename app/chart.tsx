@@ -10,11 +10,13 @@ import {
     View
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useTheme } from '../contexts/ThemeContext';
 
 
 
 export default function ChartPage() {
   const router = useRouter();
+  const { theme, toggleTheme, currentTheme } = useTheme();
   const webViewRef = useRef<WebView>(null);
   const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
@@ -71,10 +73,10 @@ export default function ChartPage() {
               "symbol": "NASDAQ:${selectedSymbol}",
               "interval": "${selectedTimeframe}",
               "timezone": "Etc/UTC",
-              "theme": "light",
+              "theme": "${theme.tradingViewTheme}",
               "style": "1",
               "locale": "en",
-              "toolbar_bg": "#f1f3f6",
+              "toolbar_bg": "${theme.tradingViewToolbar}",
               "enable_publishing": false,
               "hide_top_toolbar": false,
               "hide_legend": false,
@@ -228,6 +230,10 @@ export default function ChartPage() {
     }
   };
 
+  const handleThemeToggle = () => {
+    toggleTheme();
+  };
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -238,25 +244,41 @@ export default function ChartPage() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header - Hide in fullscreen */}
       {!isFullscreen && (
-        <View style={styles.header}>
+        <View style={[styles.header, { 
+          backgroundColor: theme.headerBackground, 
+          borderBottomColor: theme.headerBorder 
+        }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Trading Charts</Text>
-          <TouchableOpacity onPress={handleFullScreen} style={styles.fullscreenButton}>
-            <Ionicons name="expand" size={24} color="#333" />
-          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Trading Charts</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={handleThemeToggle} style={styles.themeButton}>
+              <Ionicons 
+                name={currentTheme === 'light' ? 'sunny' : currentTheme === 'dark' ? 'moon' : 'moon-outline'} 
+                size={20} 
+                color={theme.text} 
+              />
+              <Text style={[styles.themeText, { color: theme.secondaryText }]}>{theme.name}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleFullScreen} style={styles.fullscreenButton}>
+              <Ionicons name="expand" size={24} color={theme.text} />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* Combined Selectors - Hide in fullscreen */}
       {!isFullscreen && (
-        <View style={styles.combinedSelectorContainer}>
+        <View style={[styles.combinedSelectorContainer, { 
+          backgroundColor: theme.headerBackground, 
+          borderBottomColor: theme.headerBorder 
+        }]}>
           <View style={styles.compactSelectorRow}>
-            <Text style={styles.compactLabel}>Symbol:</Text>
+            <Text style={[styles.compactLabel, { color: theme.text }]}>Symbol:</Text>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
@@ -267,14 +289,22 @@ export default function ChartPage() {
                   key={item.symbol}
                   style={[
                     styles.compactButton,
-                    selectedSymbol === item.symbol && styles.selectedCompactButton
+                    { 
+                      backgroundColor: theme.buttonBackground, 
+                      borderColor: theme.buttonBorder 
+                    },
+                    selectedSymbol === item.symbol && { 
+                      backgroundColor: theme.selectedButton, 
+                      borderColor: theme.selectedButton 
+                    }
                   ]}
                   onPress={() => handleSymbolSelect(item.symbol)}
                 >
                   <Text
                     style={[
                       styles.compactButtonText,
-                      selectedSymbol === item.symbol && styles.selectedCompactButtonText
+                      { color: theme.text },
+                      selectedSymbol === item.symbol && { color: theme.selectedButtonText }
                     ]}
                   >
                     {item.symbol}
@@ -285,7 +315,7 @@ export default function ChartPage() {
           </View>
           
           <View style={styles.compactSelectorRow}>
-            <Text style={styles.compactLabel}>Time:</Text>
+            <Text style={[styles.compactLabel, { color: theme.text }]}>Time:</Text>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
@@ -296,14 +326,22 @@ export default function ChartPage() {
                   key={timeframe}
                   style={[
                     styles.compactButton,
-                    selectedTimeframe === timeframe && styles.selectedCompactButton
+                    { 
+                      backgroundColor: theme.buttonBackground, 
+                      borderColor: theme.buttonBorder 
+                    },
+                    selectedTimeframe === timeframe && { 
+                      backgroundColor: theme.selectedButton, 
+                      borderColor: theme.selectedButton 
+                    }
                   ]}
                   onPress={() => handleTimeframeSelect(timeframe)}
                 >
                   <Text
                     style={[
                       styles.compactButtonText,
-                      selectedTimeframe === timeframe && styles.selectedCompactButtonText
+                      { color: theme.text },
+                      selectedTimeframe === timeframe && { color: theme.selectedButtonText }
                     ]}
                   >
                     {timeframe}
@@ -316,7 +354,10 @@ export default function ChartPage() {
       )}
 
       {/* Chart Container */}
-      <View style={isFullscreen ? styles.fullscreenChartContainer : styles.chartContainer}>
+      <View style={[
+        isFullscreen ? styles.fullscreenChartContainer : styles.chartContainer,
+        !isFullscreen && { borderColor: theme.border }
+      ]}>
         <WebView
           ref={webViewRef}
           source={{ html: tradingViewHTML }}
@@ -335,8 +376,8 @@ export default function ChartPage() {
             }
           }}
           renderLoading={() => (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Loading Chart...</Text>
+            <View style={[styles.loadingContainer, { backgroundColor: theme.headerBackground }]}>
+              <Text style={[styles.loadingText, { color: theme.secondaryText }]}>Loading Chart...</Text>
             </View>
           )}
           onError={(error) => {
@@ -359,7 +400,17 @@ export default function ChartPage() {
                   <TouchableOpacity onPress={handleFullScreen} style={styles.exitFullscreenButton}>
                     <Ionicons name="contract" size={24} color="#fff" />
                   </TouchableOpacity>
-                  <Text style={styles.fullscreenSymbolText}>{selectedSymbol} • {selectedTimeframe}</Text>
+                  <View style={styles.fullscreenInfo}>
+                    <Text style={styles.fullscreenSymbolText}>{selectedSymbol} • {selectedTimeframe}</Text>
+                    <TouchableOpacity onPress={handleThemeToggle} style={styles.fullscreenThemeButton}>
+                      <Ionicons 
+                        name={currentTheme === 'light' ? 'sunny' : currentTheme === 'dark' ? 'moon' : 'moon-outline'} 
+                        size={16} 
+                        color="#fff" 
+                      />
+                      <Text style={styles.fullscreenThemeText}>{theme.name}</Text>
+                    </TouchableOpacity>
+                  </View>
                   <TouchableOpacity onPress={handleFullScreen} style={styles.exitFullscreenButton}>
                     <Ionicons name="close" size={24} color="#fff" />
                   </TouchableOpacity>
@@ -379,10 +430,13 @@ export default function ChartPage() {
 
       {/* TradingView Style Indicators Panel - Hide in fullscreen */}
       {!isFullscreen && (
-        <View style={styles.indicatorsPanel}>
+        <View style={[styles.indicatorsPanel, { 
+          backgroundColor: theme.panelBackground, 
+          borderTopColor: theme.border 
+        }]}>
           <View style={styles.indicatorsPanelHeader}>
-            <Text style={styles.indicatorsPanelTitle}>Indicators</Text>
-            <Text style={styles.indicatorsCount}>({selectedIndicators.length})</Text>
+            <Text style={[styles.indicatorsPanelTitle, { color: theme.text }]}>Indicators</Text>
+            <Text style={[styles.indicatorsCount, { color: theme.secondaryText }]}>({selectedIndicators.length})</Text>
           </View>
           <ScrollView 
             horizontal 
@@ -396,23 +450,35 @@ export default function ChartPage() {
                   key={indicator.key}
                   style={[
                     styles.indicatorBox,
-                    isSelected && styles.selectedIndicatorBox
+                    { 
+                      backgroundColor: theme.indicatorBox, 
+                      borderColor: theme.border 
+                    },
+                    isSelected && { 
+                      backgroundColor: theme.selectedButton, 
+                      borderColor: theme.selectedButton 
+                    }
                   ]}
                   onPress={() => handleIndicatorToggle(indicator.key)}
                 >
                   <View style={styles.indicatorContent}>
                     <Text style={[
                       styles.indicatorName,
-                      isSelected && styles.selectedIndicatorName
+                      { color: theme.text },
+                      isSelected && { color: theme.selectedButtonText }
                     ]}>
                       {indicator.name}
                     </Text>
                     <View style={[
                       styles.indicatorCheckbox,
-                      isSelected && styles.selectedIndicatorCheckbox
+                      { borderColor: theme.border },
+                      isSelected && { 
+                        backgroundColor: theme.selectedButtonText, 
+                        borderColor: theme.selectedButtonText 
+                      }
                     ]}>
                       {isSelected && (
-                        <Ionicons name="checkmark" size={12} color="#fff" />
+                        <Ionicons name="checkmark" size={12} color={theme.selectedButton} />
                       )}
                     </View>
                   </View>
@@ -429,7 +495,6 @@ export default function ChartPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -438,9 +503,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 44,
     paddingBottom: 8,
-    backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
   backButton: {
     padding: 8,
@@ -448,17 +511,34 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    flex: 1,
+    textAlign: 'center',
   },
   fullscreenButton: {
     padding: 8,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  themeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 6,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  themeText: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
   combinedSelectorContainer: {
     paddingHorizontal: 16,
     paddingVertical: 4,
-    backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
   },
   compactSelectorRow: {
     flexDirection: 'row',
@@ -468,7 +548,6 @@ const styles = StyleSheet.create({
   compactLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
     width: 60,
     marginRight: 8,
   },
@@ -479,30 +558,19 @@ const styles = StyleSheet.create({
   compactButton: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    backgroundColor: '#fff',
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#ddd',
     marginRight: 6,
-  },
-  selectedCompactButton: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
   },
   compactButtonText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#333',
-  },
-  selectedCompactButtonText: {
-    color: '#fff',
   },
   chartContainer: {
     flex: 0.7,
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e9ecef',
   },
   fullscreenChartContainer: {
     position: 'absolute',
@@ -560,6 +628,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  fullscreenInfo: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  fullscreenThemeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  fullscreenThemeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '500',
+    marginLeft: 2,
+  },
   webview: {
     flex: 1,
   },
@@ -578,17 +665,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
   },
   // TradingView Style Indicators Panel
   indicatorsPanel: {
-    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
     paddingVertical: 12,
   },
   indicatorsPanelHeader: {
@@ -600,29 +683,21 @@ const styles = StyleSheet.create({
   indicatorsPanelTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
   },
   indicatorsCount: {
     fontSize: 14,
-    color: '#666',
     marginLeft: 4,
   },
   indicatorsScrollContainer: {
     paddingHorizontal: 16,
   },
   indicatorBox: {
-    backgroundColor: '#f8f9fa',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginRight: 8,
     borderWidth: 1.5,
-    borderColor: '#e9ecef',
     minWidth: 100,
-  },
-  selectedIndicatorBox: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
   },
   indicatorContent: {
     flexDirection: 'row',
@@ -632,24 +707,15 @@ const styles = StyleSheet.create({
   indicatorName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
     flex: 1,
-  },
-  selectedIndicatorName: {
-    color: '#fff',
   },
   indicatorCheckbox: {
     width: 16,
     height: 16,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: '#ccc',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
-  },
-  selectedIndicatorCheckbox: {
-    backgroundColor: '#fff',
-    borderColor: '#fff',
   },
 });

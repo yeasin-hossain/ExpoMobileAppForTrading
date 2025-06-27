@@ -4,16 +4,19 @@ import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function ProfileTab() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   
   const [menuItems, setMenuItems] = useState([
-    { id: 1, icon: "settings", title: "Settings" },
-    { id: 2, icon: "notifications", title: "Notifications" },
-    { id: 3, icon: "help-circle", title: "Help & Support" },
-    { id: 4, icon: "information-circle", title: "About" },
-    { id: 5, icon: "log-out", title: "Logout", isLogout: true },
+    { id: 1, icon: "color-palette", title: "Theme", isTheme: true },
+    { id: 2, icon: "settings", title: "Settings" },
+    { id: 3, icon: "notifications", title: "Notifications" },
+    { id: 4, icon: "help-circle", title: "Help & Support" },
+    { id: 5, icon: "information-circle", title: "About" },
+    { id: 6, icon: "log-out", title: "Logout", isLogout: true },
   ]);
 
   const [activeSwipeId, setActiveSwipeId] = useState<number | null>(null);
@@ -78,26 +81,37 @@ export default function ProfileTab() {
     );
   };
 
+  const handleMenuItemPress = (item: any) => {
+    if (item.isLogout) {
+      handleLogout();
+    } else if (item.isTheme) {
+      toggleTheme();
+    } else {
+      // Handle other menu items
+      Alert.alert(item.title, `${item.title} pressed`);
+    }
+  };
+
   const resetAllSwipes = () => {
     setActiveSwipeId(null);
   };
 
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={1} onPress={resetAllSwipes}>
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person" size={60} color="#fff" />
+    <TouchableOpacity style={[styles.container, { backgroundColor: theme.background }]} activeOpacity={1} onPress={resetAllSwipes}>
+      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
+        <View style={[styles.avatarContainer, { backgroundColor: theme.selectedButton }]}>
+          <Ionicons name="person" size={60} color={theme.selectedButtonText} />
         </View>
-        <Text style={styles.name}>{profileData.name}</Text>
-        <Text style={styles.email}>{profileData.email}</Text>
-        <Text style={styles.joinDate}>Joined {profileData.joinDate}</Text>
+        <Text style={[styles.name, { color: theme.text }]}>{profileData.name}</Text>
+        <Text style={[styles.email, { color: theme.secondaryText }]}>{profileData.email}</Text>
+        <Text style={[styles.joinDate, { color: theme.secondaryText }]}>Joined {profileData.joinDate}</Text>
       </View>
 
-      <View style={styles.statsContainer}>
+      <View style={[styles.statsContainer, { backgroundColor: theme.cardBackground }]}>
         {profileData.stats.map((stat, index) => (
           <View key={index} style={styles.statItem}>
-            <Text style={styles.statValue}>{stat.value}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={[styles.statValue, { color: theme.text }]}>{stat.value}</Text>
+            <Text style={[styles.statLabel, { color: theme.secondaryText }]}>{stat.label}</Text>
           </View>
         ))}
       </View>
@@ -110,10 +124,12 @@ export default function ProfileTab() {
             icon={item.icon} 
             title={item.title}
             onDelete={handleDeleteItem}
+            onPress={() => handleMenuItemPress(item)}
             isActive={activeSwipeId === item.id}
             onSwipeStart={() => setActiveSwipeId(item.id)}
             onSwipeReset={() => setActiveSwipeId(null)}
             isLogout={item.isLogout || false}
+            isTheme={item.isTheme || false}
           />
         ))}
       </View>
@@ -126,20 +142,25 @@ function MenuItem({
   icon, 
   title, 
   onDelete, 
+  onPress,
   isActive, 
   onSwipeStart, 
   onSwipeReset,
-  isLogout = false
+  isLogout = false,
+  isTheme = false
 }: { 
   id: number; 
   icon: string; 
   title: string; 
   onDelete: (id: number) => void;
+  onPress: () => void;
   isActive: boolean;
   onSwipeStart: () => void;
   onSwipeReset: () => void;
   isLogout?: boolean;
+  isTheme?: boolean;
 }) {
+  const { theme } = useTheme();
   const translateX = useSharedValue(0);
   const [isSwipedLeft, setIsSwipedLeft] = useState(false);
 
@@ -199,13 +220,19 @@ function MenuItem({
             e.stopPropagation();
             if (isSwipedLeft) {
               resetPosition();
+            } else {
+              onPress();
             }
           }}
         >
-          <Animated.View style={[styles.menuItem, animatedStyle]}>
-            <Ionicons name={icon as any} size={24} color="#007AFF" />
-            <Text style={styles.menuItemText}>{title}</Text>
-            <Ionicons name="chevron-forward" size={20} color="#c7c7cc" />
+          <Animated.View style={[styles.menuItem, { backgroundColor: theme.cardBackground }, animatedStyle]}>
+            <Ionicons 
+              name={icon as any} 
+              size={24} 
+              color={isLogout ? theme.errorText : isTheme ? theme.selectedButton : theme.selectedButton} 
+            />
+            <Text style={[styles.menuItemText, { color: theme.text }]}>{title}</Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.secondaryText} />
           </Animated.View>
         </TouchableOpacity>
       </GestureDetector>
