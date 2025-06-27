@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 export type ThemeType = 'light' | 'dark' | 'moonlight';
 
@@ -135,21 +136,50 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState<ThemeType>('light');
 
+  // Load theme from storage on app startup
+  useEffect(() => {
+    loadTheme();
+  }, []);
+
+  const loadTheme = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('app_theme');
+      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'moonlight')) {
+        setCurrentTheme(savedTheme as ThemeType);
+      }
+    } catch (error) {
+      console.error('Error loading theme:', error);
+    }
+  };
+
+  const saveTheme = async (theme: ThemeType) => {
+    try {
+      await AsyncStorage.setItem('app_theme', theme);
+    } catch (error) {
+      console.error('Error saving theme:', error);
+    }
+  };
+
   const theme = themes[currentTheme];
 
   const setTheme = (newTheme: ThemeType) => {
     setCurrentTheme(newTheme);
+    saveTheme(newTheme);
   };
 
   const toggleTheme = () => {
     const themeOrder: ThemeType[] = ['light', 'dark', 'moonlight'];
     const currentIndex = themeOrder.indexOf(currentTheme);
     const nextIndex = (currentIndex + 1) % themeOrder.length;
-    setCurrentTheme(themeOrder[nextIndex]);
+    const newTheme = themeOrder[nextIndex];
+    setCurrentTheme(newTheme);
+    saveTheme(newTheme);
   };
 
+  const contextValue = { currentTheme, theme, setTheme, toggleTheme };
+
   return (
-    <ThemeContext.Provider value={{ currentTheme, theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       <StatusBar style={currentTheme === 'light' ? 'dark' : 'light'} />
       {children}
     </ThemeContext.Provider>
