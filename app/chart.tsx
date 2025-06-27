@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     Alert,
     ScrollView,
@@ -16,9 +16,12 @@ import { WebView } from 'react-native-webview';
 export default function ChartPage() {
   const router = useRouter();
   const webViewRef = useRef<WebView>(null);
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(['MA', 'RSI']);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFullscreenControls, setShowFullscreenControls] = useState(true);
 
   const symbols = [
     { symbol: 'AAPL', name: 'Apple Inc.' },
@@ -189,90 +192,135 @@ export default function ChartPage() {
     });
   };
 
-  const handleFullScreen = () => {
-    Alert.alert('Full Screen', 'Full screen chart functionality would be implemented here');
+  const resetHideControlsTimer = () => {
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+    setShowFullscreenControls(true);
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setShowFullscreenControls(false);
+    }, 3000); // Hide after 3 seconds
   };
+
+  const handleFullScreen = () => {
+    setIsFullscreen(prev => {
+      const newFullscreen = !prev;
+      if (newFullscreen) {
+        setShowFullscreenControls(true);
+        resetHideControlsTimer();
+      } else {
+        setShowFullscreenControls(true);
+        if (hideControlsTimeoutRef.current) {
+          clearTimeout(hideControlsTimeoutRef.current);
+        }
+      }
+      return newFullscreen;
+    });
+  };
+
+  const handleFullscreenTap = () => {
+    if (isFullscreen) {
+      if (showFullscreenControls) {
+        handleFullScreen(); // Exit fullscreen if controls are visible
+      } else {
+        resetHideControlsTimer(); // Show controls if they're hidden
+      }
+    }
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Trading Charts</Text>
-        <TouchableOpacity onPress={handleFullScreen} style={styles.fullscreenButton}>
-          <Ionicons name="expand" size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
+      {/* Header - Hide in fullscreen */}
+      {!isFullscreen && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Trading Charts</Text>
+          <TouchableOpacity onPress={handleFullScreen} style={styles.fullscreenButton}>
+            <Ionicons name="expand" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+      )}
 
-      {/* Combined Selectors */}
-      <View style={styles.combinedSelectorContainer}>
-        <View style={styles.compactSelectorRow}>
-          <Text style={styles.compactLabel}>Symbol:</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.compactSelector}
-          >
-            {symbols.map((item) => (
-              <TouchableOpacity
-                key={item.symbol}
-                style={[
-                  styles.compactButton,
-                  selectedSymbol === item.symbol && styles.selectedCompactButton
-                ]}
-                onPress={() => handleSymbolSelect(item.symbol)}
-              >
-                <Text
+      {/* Combined Selectors - Hide in fullscreen */}
+      {!isFullscreen && (
+        <View style={styles.combinedSelectorContainer}>
+          <View style={styles.compactSelectorRow}>
+            <Text style={styles.compactLabel}>Symbol:</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.compactSelector}
+            >
+              {symbols.map((item) => (
+                <TouchableOpacity
+                  key={item.symbol}
                   style={[
-                    styles.compactButtonText,
-                    selectedSymbol === item.symbol && styles.selectedCompactButtonText
+                    styles.compactButton,
+                    selectedSymbol === item.symbol && styles.selectedCompactButton
                   ]}
+                  onPress={() => handleSymbolSelect(item.symbol)}
                 >
-                  {item.symbol}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-        
-        <View style={styles.compactSelectorRow}>
-          <Text style={styles.compactLabel}>Time:</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.compactSelector}
-          >
-            {timeframes.map((timeframe) => (
-              <TouchableOpacity
-                key={timeframe}
-                style={[
-                  styles.compactButton,
-                  selectedTimeframe === timeframe && styles.selectedCompactButton
-                ]}
-                onPress={() => handleTimeframeSelect(timeframe)}
-              >
-                <Text
+                  <Text
+                    style={[
+                      styles.compactButtonText,
+                      selectedSymbol === item.symbol && styles.selectedCompactButtonText
+                    ]}
+                  >
+                    {item.symbol}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          
+          <View style={styles.compactSelectorRow}>
+            <Text style={styles.compactLabel}>Time:</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.compactSelector}
+            >
+              {timeframes.map((timeframe) => (
+                <TouchableOpacity
+                  key={timeframe}
                   style={[
-                    styles.compactButtonText,
-                    selectedTimeframe === timeframe && styles.selectedCompactButtonText
+                    styles.compactButton,
+                    selectedTimeframe === timeframe && styles.selectedCompactButton
                   ]}
+                  onPress={() => handleTimeframeSelect(timeframe)}
                 >
-                  {timeframe}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text
+                    style={[
+                      styles.compactButtonText,
+                      selectedTimeframe === timeframe && styles.selectedCompactButtonText
+                    ]}
+                  >
+                    {timeframe}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Chart Container */}
-      <View style={styles.chartContainer}>
+      <View style={isFullscreen ? styles.fullscreenChartContainer : styles.chartContainer}>
         <WebView
           ref={webViewRef}
           source={{ html: tradingViewHTML }}
-          style={styles.webview}
+          style={isFullscreen ? styles.fullscreenWebview : styles.webview}
           javaScriptEnabled={true}
           domStorageEnabled={true}
           startInLoadingState={true}
@@ -296,51 +344,84 @@ export default function ChartPage() {
             Alert.alert('Error', 'Failed to load chart. Please try again.');
           }}
         />
+        
+        {/* Fullscreen controls overlay - positioned above WebView */}
+        {isFullscreen && (
+          <>
+            {/* Top overlay area for controls */}
+            <TouchableOpacity 
+              style={styles.fullscreenTopOverlay}
+              onPress={handleFullscreenTap}
+              activeOpacity={1}
+            >
+              {showFullscreenControls && (
+                <View style={styles.fullscreenControls}>
+                  <TouchableOpacity onPress={handleFullScreen} style={styles.exitFullscreenButton}>
+                    <Ionicons name="contract" size={24} color="#fff" />
+                  </TouchableOpacity>
+                  <Text style={styles.fullscreenSymbolText}>{selectedSymbol} • {selectedTimeframe}</Text>
+                  <TouchableOpacity onPress={handleFullScreen} style={styles.exitFullscreenButton}>
+                    <Ionicons name="close" size={24} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </TouchableOpacity>
+            
+            {/* Bottom overlay area for tap to show/hide controls */}
+            <TouchableOpacity 
+              style={styles.fullscreenBottomOverlay}
+              onPress={handleFullscreenTap}
+              activeOpacity={1}
+            />
+          </>
+        )}
       </View>
 
-      {/* TradingView Style Indicators Panel */}
-      <View style={styles.indicatorsPanel}>
-        <View style={styles.indicatorsPanelHeader}>
-          <Text style={styles.indicatorsPanelTitle}>Indicators</Text>
-          <Text style={styles.indicatorsCount}>({selectedIndicators.length})</Text>
-        </View>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.indicatorsScrollContainer}
-        >
-          {indicators.map((indicator) => {
-            const isSelected = selectedIndicators.includes(indicator.key);
-            return (
-              <TouchableOpacity
-                key={indicator.key}
-                style={[
-                  styles.indicatorBox,
-                  isSelected && styles.selectedIndicatorBox
-                ]}
-                onPress={() => handleIndicatorToggle(indicator.key)}
-              >
-                <View style={styles.indicatorContent}>
-                  <Text style={[
-                    styles.indicatorName,
-                    isSelected && styles.selectedIndicatorName
-                  ]}>
-                    {indicator.name}
-                  </Text>
-                  <View style={[
-                    styles.indicatorCheckbox,
-                    isSelected && styles.selectedIndicatorCheckbox
-                  ]}>
-                    {isSelected && (
-                      <Ionicons name="checkmark" size={12} color="#fff" />
-                    )}
+      {/* TradingView Style Indicators Panel - Hide in fullscreen */}
+      {!isFullscreen && (
+        <View style={styles.indicatorsPanel}>
+          <View style={styles.indicatorsPanelHeader}>
+            <Text style={styles.indicatorsPanelTitle}>Indicators</Text>
+            <Text style={styles.indicatorsCount}>({selectedIndicators.length})</Text>
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.indicatorsScrollContainer}
+          >
+            {indicators.map((indicator) => {
+              const isSelected = selectedIndicators.includes(indicator.key);
+              return (
+                <TouchableOpacity
+                  key={indicator.key}
+                  style={[
+                    styles.indicatorBox,
+                    isSelected && styles.selectedIndicatorBox
+                  ]}
+                  onPress={() => handleIndicatorToggle(indicator.key)}
+                >
+                  <View style={styles.indicatorContent}>
+                    <Text style={[
+                      styles.indicatorName,
+                      isSelected && styles.selectedIndicatorName
+                    ]}>
+                      {indicator.name}
+                    </Text>
+                    <View style={[
+                      styles.indicatorCheckbox,
+                      isSelected && styles.selectedIndicatorCheckbox
+                    ]}>
+                      {isSelected && (
+                        <Ionicons name="checkmark" size={12} color="#fff" />
+                      )}
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
@@ -423,8 +504,71 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e9ecef',
   },
+  fullscreenChartContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000',
+    zIndex: 999,
+  },
+  fullscreenControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 30,
+    marginHorizontal: 16,
+    minHeight: 50,
+    zIndex: 1001,
+  },
+  exitFullscreenButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullscreenTopOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    backgroundColor: 'transparent',
+    zIndex: 1000,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 50,
+  },
+  fullscreenBottomOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    backgroundColor: 'transparent',
+    zIndex: 1000,
+  },
+  fullscreenSymbolText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   webview: {
     flex: 1,
+  },
+  fullscreenWebview: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   loadingContainer: {
     position: 'absolute',
