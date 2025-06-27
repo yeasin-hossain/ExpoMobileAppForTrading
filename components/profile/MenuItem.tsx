@@ -64,6 +64,8 @@ export default function MenuItem({
   });
 
   const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10]) // Only activate for horizontal gestures
+    .failOffsetY([-10, 10])   // Fail for vertical gestures to allow ScrollView
     .onUpdate((event) => {
       if (event.translationX < 0) {
         translateX.value = Math.max(event.translationX, -100);
